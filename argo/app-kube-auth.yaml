@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/EstebanForero/kube-auth.git
     path: .
-    targetRevision: main
+    targetRevision: master
     helm:
       valueFiles:
         - values.yaml
