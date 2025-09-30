@@ -1,0 +1,74 @@
+# values.yaml
+global:
+  domain: auth.estebanmf.space
+
+namespaces:
+  argocd: argocd
+  certManager: cert-manager
+  ingress: ingress-nginx
+  zitadel: auth
+
+cloudflare:
+  email: you@example.com              # email for Let's Encrypt registration
+  apiTokenSecretName: cloudflare-api-token-secret
+  apiTokenKey: api-token
+
+letsencrypt:
+  clusterIssuerName: letsencrypt-cloudflare
+
+zitadel:
+  # we use Argo CD to deploy Zitadel's official Helm chart (OCI) with these values
+  chartVersion: ">=8.0.0"             # you can pin later; use latest 8/9.x from ArtifactHub
+  masterkeySecretName: zitadel-masterkey
+  internalTLSSecretName: zitadel-internal-tls
+  values:
+    fullnameOverride: "zitadel"
+    zitadel:
+      masterkeySecretName: "zitadel-masterkey"
+      configmapConfig:
+        ExternalDomain: "{{ .Values.global.domain }}"
+        ExternalPort: 443
+        ExternalSecure: true
+        TLS:
+          Enabled: true
+      secretConfig:
+        TLS:
+          existingSecret: "zitadel-internal-tls"
+          certKey: "tls.crt"
+          keyKey: "tls.key"
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: "{{ .Values.letsencrypt.clusterIssuerName }}"
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+      hosts:
+        - host: "{{ .Values.global.domain }}"
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: "{{ replace .Values.global.domain \".\" \"-\" }}-tls"
+          hosts:
+            - "{{ .Values.global.domain }}"
+    login:
+      ingress:
+        enabled: true
+        className: nginx
+        annotations:
+          cert-manager.io/cluster-issuer: "{{ .Values.letsencrypt.clusterIssuerName }}"
+          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+        hosts:
+          - host: "{{ .Values.global.domain }}"
+            paths:
+              - path: /ui/v2/login
+                pathType: Prefix
+        tls:
+          - secretName: "{{ replace .Values.global.domain \".\" \"-\" }}-tls"
+            hosts:
+              - "{{ .Values.global.domain }}"
+

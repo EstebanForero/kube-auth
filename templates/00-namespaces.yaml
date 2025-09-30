@@ -1,0 +1,24 @@
+{{- $nsArgo := .Values.namespaces.argocd -}}
+{{- $nsCM := .Values.namespaces.certManager -}}
+{{- $nsIng := .Values.namespaces.ingress -}}
+{{- $nsZit := .Values.namespaces.zitadel -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $nsArgo }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $nsCM }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $nsIng }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $nsZit }}
+
