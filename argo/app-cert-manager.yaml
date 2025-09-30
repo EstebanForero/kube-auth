@@ -1,21 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kube-auth
+  name: cert-manager
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/EstebanForero/kube-auth.git
     targetRevision: master
-    path: .   # umbrella chart at repo root
+    path: charts/cert-manager   # 👈 assumes cert-manager subchart is here
     helm:
-      releaseName: kube-auth
-      valueFiles:
-        - values.yaml
+      releaseName: cert-manager
+      values: |
+        installCRDs: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: cert-manager
   syncPolicy:
     automated:
       prune: true
