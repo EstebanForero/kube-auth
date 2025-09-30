@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://your.git.host/your-user/kube-auth.git
+    repoURL: https://github.com/EstebanForero/kube-auth.git
     path: .
     targetRevision: main
     helm:
@@ -14,7 +14,7 @@ spec:
         - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: {{ .Values.namespaces.argocd | default "argocd" }}
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
