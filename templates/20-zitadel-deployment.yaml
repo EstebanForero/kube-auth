@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: zitadel
-  namespace: {{ include "kube-auth.ns" . }}
+  namespace: auth
 spec:
   replicas: 1
   selector:
@@ -16,25 +16,27 @@ spec:
       containers:
       - name: zitadel
         image: ghcr.io/zitadel/zitadel:latest
-        args: ["start"]
-        ports:
-        - containerPort: 8080
-        - containerPort: 8443
+        args: ["start-from-init"]
         env:
         - name: ZITADEL_MASTERKEY
           value: "insecure-dev-key"
         - name: ZITADEL_DATABASE_POSTGRES_HOST
-          value: "{{ .Release.Name }}-postgresql"
+          value: "kube-auth-postgresql"
+        - name: ZITADEL_DATABASE_POSTGRES_PORT
+          value: "5432"
         - name: ZITADEL_DATABASE_POSTGRES_USER
           value: "zitadel"
         - name: ZITADEL_DATABASE_POSTGRES_PASSWORD
           value: "zitadelpass"
         - name: ZITADEL_DATABASE_POSTGRES_DATABASE
           value: "zitadel"
-        - name: ZITADEL_EXTERNALSECURE
-          value: "true"
+        - name: ZITADEL_EXTERNALDOMAIN
+          value: "auth.estebanmf.space"
         - name: ZITADEL_EXTERNALPORT
           value: "443"
-        - name: ZITADEL_EXTERNALDOMAIN
-          value: {{ .Values.global.domain }}
+        - name: ZITADEL_EXTERNALSECURE
+          value: "true"
+        ports:
+        - containerPort: 8080
+        - containerPort: 8443
 
