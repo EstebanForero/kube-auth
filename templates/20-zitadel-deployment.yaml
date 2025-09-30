@@ -16,6 +16,7 @@ spec:
       containers:
       - name: zitadel
         image: ghcr.io/zitadel/zitadel:latest
+        args: ["start"]
         ports:
         - containerPort: 8080
         - containerPort: 8443
