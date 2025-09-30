@@ -97,3 +97,6 @@ zitadel:
           hosts:
             - "{{ .Values.global.domain }}"
 
+_dev:
+  generateDummyZitadelSecrets: false
+
