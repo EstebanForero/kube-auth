@@ -41,6 +41,9 @@ zitadel:
   enabled: true
   fullnameOverride: "zitadel"
 
+  global:
+    domain: auth.estebanmf.space
+
   zitadel:
     # masterkey is taken from existing Secret (created by script)
     masterkeySecretName: "zitadel-masterkey"
