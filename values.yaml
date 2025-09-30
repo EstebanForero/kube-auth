@@ -1,62 +1,62 @@
+# ──────────────────────────────
+# Global values
+# ──────────────────────────────
 global:
   domain: auth.estebanmf.space
 
+
+# ──────────────────────────────
+# Namespaces
+# ──────────────────────────────
 namespaces:
   argocd: argocd
   certManager: cert-manager
   ingress: ingress-nginx
   zitadel: auth
 
-# ─────────────────────────
-# cert-manager subchart
-# ─────────────────────────
+
+# ──────────────────────────────
+# Cert-manager subchart
+# ──────────────────────────────
 certManager:
   enabled: true
   installCRDs: true
-  # you can pin image or defaults as needed
-  # extraArgs: []
 
+# ClusterIssuer values for your custom template (10-clusterissuer-cloudflare.yaml)
 letsencrypt:
   clusterIssuerName: letsencrypt-cloudflare
-  # email used for ACME registration:
-  email: you@example.com
-  # Secret name in cert-manager NS that stores Cloudflare API token
+  email: you@example.com                # 👈 replace with your real email
   cloudflareAPITokenSecretName: cloudflare-api-token-secret
   cloudflareAPITokenKey: api-token
 
-# ─────────────────────────
-# ingress-nginx subchart
-# ─────────────────────────
+# ──────────────────────────────
+# Ingress-nginx subchart
+# ──────────────────────────────
 ingressNginx:
   enabled: true
   controller:
     service:
-      annotations: {}   # add LB annotations if needed (NLB/ELB/etc.)
-    # set resources, replicas, etc. as required
+      annotations: {}   # add DigitalOcean LB annotations if needed
 
-# ─────────────────────────
+# ──────────────────────────────
 # ZITADEL subchart
-# ─────────────────────────
+# ──────────────────────────────
 zitadel:
   enabled: true
   fullnameOverride: "zitadel"
 
+  # 👇 forward the global domain so Zitadel chart doesn’t error
   global:
     domain: auth.estebanmf.space
 
   zitadel:
-    # masterkey is taken from existing Secret (created by script)
     masterkeySecretName: "zitadel-masterkey"
-
-    # Zitadel external exposure (Cloudflare → Ingress)
     configmapConfig:
-      ExternalDomain: "{{ .Values.global.domain }}"
+      ExternalDomain: "auth.estebanmf.space"
       ExternalPort: 443
       ExternalSecure: true
       TLS:
-        Enabled: true   # enable TLS inside the pod (upstream HTTPS)
-
-    # internal TLS secret for upstream re-encryption (Ingress → Zitadel over HTTPS)
+        Enabled: true
     secretConfig:
       TLS:
         existingSecret: "zitadel-internal-tls"
@@ -67,39 +67,42 @@ zitadel:
     enabled: true
     className: nginx
     annotations:
-      cert-manager.io/cluster-issuer: "{{ .Values.letsencrypt.clusterIssuerName }}"
+      cert-manager.io/cluster-issuer: letsencrypt-cloudflare
       nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
       nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
     hosts:
-      - host: "{{ .Values.global.domain }}"
+      - host: auth.estebanmf.space
         paths:
           - path: /
             pathType: Prefix
     tls:
-      - secretName: "{{ replace .Values.global.domain \".\" \"-\" }}-tls"
+      - secretName: auth-estebanmf-space-tls
         hosts:
-          - "{{ .Values.global.domain }}"
+          - auth.estebanmf.space
 
   login:
     ingress:
       enabled: true
       className: nginx
       annotations:
-        cert-manager.io/cluster-issuer: "{{ .Values.letsencrypt.clusterIssuerName }}"
+        cert-manager.io/cluster-issuer: letsencrypt-cloudflare
         nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
         nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
       hosts:
-        - host: "{{ .Values.global.domain }}"
+        - host: auth.estebanmf.space
           paths:
             - path: /ui/v2/login
               pathType: Prefix
       tls:
-        - secretName: "{{ replace .Values.global.domain \".\" \"-\" }}-tls"
+        - secretName: auth-estebanmf-space-tls
           hosts:
-            - "{{ .Values.global.domain }}"
+            - auth.estebanmf.space
 
+# ──────────────────────────────
+# Dev placeholders
+# ──────────────────────────────
 _dev:
   generateDummyZitadelSecrets: false
 
