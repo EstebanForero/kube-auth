@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zitadel-ingress
+  namespace: {{ .Values.namespaces.kubeAuth }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuerName }}
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.global.domain }}
+    secretName: {{ .Values.global.domain | replace "." "-" }}-tls
+  rules:
+  - host: {{ .Values.global.domain }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: zitadel
+            port:
+              number: 8080
+

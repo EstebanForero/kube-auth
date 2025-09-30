@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zitadel
+  namespace: {{ .Values.namespaces.kubeAuth }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zitadel
+  template:
+    metadata:
+      labels:
+        app: zitadel
+    spec:
+      containers:
+      - name: zitadel
+        image: ghcr.io/zitadel/zitadel:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ZITADEL_MASTERKEY
+          value: "insecure-dev-key"
+        - name: ZITADEL_DATABASE_POSTGRES_HOST
+          value: "{{ .Release.Name }}-postgresql"
+        - name: ZITADEL_DATABASE_POSTGRES_USER
+          value: "zitadel"
+        - name: ZITADEL_DATABASE_POSTGRES_PASSWORD
+          value: "zitadelpass"
+        - name: ZITADEL_DATABASE_POSTGRES_DATABASE
+          value: "zitadel"
+

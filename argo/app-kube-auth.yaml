@@ -8,14 +8,13 @@ spec:
   source:
     repoURL: https://github.com/EstebanForero/kube-auth.git
     targetRevision: master
-    path: .   # umbrella chart at repo root
+    path: .
     helm:
-      releaseName: kube-auth
       valueFiles:
         - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: auth
   syncPolicy:
     automated:
       prune: true
