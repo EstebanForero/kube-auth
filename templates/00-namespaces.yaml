@@ -1,24 +1,20 @@
-{{- $nsArgo := .Values.namespaces.argocd -}}
-{{- $nsCM := .Values.namespaces.certManager -}}
-{{- $nsIng := .Values.namespaces.ingress -}}
-{{- $nsZit := .Values.namespaces.zitadel -}}
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ $nsArgo }}
+  name: {{ include "kube-auth.ns.argocd" . }}
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ $nsCM }}
+  name: {{ include "kube-auth.ns.cm" . }}
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ $nsIng }}
+  name: {{ include "kube-auth.ns.ing" . }}
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ $nsZit }}
+  name: {{ include "kube-auth.ns.zit" . }}
 

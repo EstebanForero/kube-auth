@@ -1,0 +1,53 @@
+name: Publish Helm Chart to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - name: Build dependencies
+        run: helm dependency build .
+
+      - name: Package chart
+        run: |
+          mkdir -p dist
+          helm package . -d dist
+
+      - name: Prepare index.yaml
+        run: |
+          REPO_URL="https://estebanforero.github.io/kube-auth"
+          git fetch origin gh-pages:gh-pages || true
+          git checkout gh-pages || git checkout --orphan gh-pages
+          mkdir -p .
+          # merge existing index if present
+          if [ -f index.yaml ]; then
+            helm repo index . --url "$REPO_URL" --merge index.yaml
+          else
+            cp -r ../dist/* .
+            helm repo index . --url "$REPO_URL"
+            rm -rf ../dist
+          fi
+          # add/refresh packaged charts
+          cp -r ../dist/* .
+          helm repo index . --url "$REPO_URL" --merge index.yaml
+
+      - name: Publish to gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Publish Helm chart" || echo "No changes to commit"
+          git push origin gh-pages
+

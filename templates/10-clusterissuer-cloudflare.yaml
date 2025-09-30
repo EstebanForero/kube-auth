@@ -4,7 +4,7 @@ metadata:
   name: {{ .Values.letsencrypt.clusterIssuerName }}
 spec:
   acme:
-    email: {{ .Values.cloudflare.email | quote }}
+    email: {{ .Values.letsencrypt.email | quote }}
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: {{ printf "%s-account-key" .Values.letsencrypt.clusterIssuerName }}
@@ -12,6 +12,6 @@ spec:
       - dns01:
           cloudflare:
             apiTokenSecretRef:
-              name: {{ .Values.cloudflare.apiTokenSecretName }}
-              key: {{ .Values.cloudflare.apiTokenKey }}
+              name: {{ .Values.letsencrypt.cloudflareAPITokenSecretName }}
+              key: {{ .Values.letsencrypt.cloudflareAPITokenKey }}
 

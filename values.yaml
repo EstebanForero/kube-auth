@@ -1,4 +1,3 @@
-# values.yaml
 global:
   domain: auth.estebanmf.space
 
@@ -8,34 +7,78 @@ namespaces:
   ingress: ingress-nginx
   zitadel: auth
 
-cloudflare:
-  email: you@example.com              # email for Let's Encrypt registration
-  apiTokenSecretName: cloudflare-api-token-secret
-  apiTokenKey: api-token
+# ─────────────────────────
+# cert-manager subchart
+# ─────────────────────────
+certManager:
+  enabled: true
+  installCRDs: true
+  # you can pin image or defaults as needed
+  # extraArgs: []
 
 letsencrypt:
   clusterIssuerName: letsencrypt-cloudflare
+  # email used for ACME registration:
+  email: you@example.com
+  # Secret name in cert-manager NS that stores Cloudflare API token
+  cloudflareAPITokenSecretName: cloudflare-api-token-secret
+  cloudflareAPITokenKey: api-token
 
+# ─────────────────────────
+# ingress-nginx subchart
+# ─────────────────────────
+ingressNginx:
+  enabled: true
+  controller:
+    service:
+      annotations: {}   # add LB annotations if needed (NLB/ELB/etc.)
+    # set resources, replicas, etc. as required
+
+# ─────────────────────────
+# ZITADEL subchart
+# ─────────────────────────
 zitadel:
-  # we use Argo CD to deploy Zitadel's official Helm chart (OCI) with these values
-  chartVersion: ">=8.0.0"             # you can pin later; use latest 8/9.x from ArtifactHub
-  masterkeySecretName: zitadel-masterkey
-  internalTLSSecretName: zitadel-internal-tls
-  values:
-    fullnameOverride: "zitadel"
-    zitadel:
-      masterkeySecretName: "zitadel-masterkey"
-      configmapConfig:
-        ExternalDomain: "{{ .Values.global.domain }}"
-        ExternalPort: 443
-        ExternalSecure: true
-        TLS:
-          Enabled: true
-      secretConfig:
-        TLS:
-          existingSecret: "zitadel-internal-tls"
-          certKey: "tls.crt"
-          keyKey: "tls.key"
+  enabled: true
+  fullnameOverride: "zitadel"
+
+  zitadel:
+    # masterkey is taken from existing Secret (created by script)
+    masterkeySecretName: "zitadel-masterkey"
+
+    # Zitadel external exposure (Cloudflare → Ingress)
+    configmapConfig:
+      ExternalDomain: "{{ .Values.global.domain }}"
+      ExternalPort: 443
+      ExternalSecure: true
+      TLS:
+        Enabled: true   # enable TLS inside the pod (upstream HTTPS)
+
+    # internal TLS secret for upstream re-encryption (Ingress → Zitadel over HTTPS)
+    secretConfig:
+      TLS:
+        existingSecret: "zitadel-internal-tls"
+        certKey: "tls.crt"
+        keyKey: "tls.key"
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: "{{ .Values.letsencrypt.clusterIssuerName }}"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    hosts:
+      - host: "{{ .Values.global.domain }}"
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: "{{ replace .Values.global.domain \".\" \"-\" }}-tls"
+        hosts:
+          - "{{ .Values.global.domain }}"
+
+  login:
     ingress:
       enabled: true
       className: nginx
@@ -47,28 +90,10 @@ zitadel:
       hosts:
         - host: "{{ .Values.global.domain }}"
           paths:
-            - path: /
+            - path: /ui/v2/login
               pathType: Prefix
       tls:
         - secretName: "{{ replace .Values.global.domain \".\" \"-\" }}-tls"
           hosts:
             - "{{ .Values.global.domain }}"
-    login:
-      ingress:
-        enabled: true
-        className: nginx
-        annotations:
-          cert-manager.io/cluster-issuer: "{{ .Values.letsencrypt.clusterIssuerName }}"
-          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-          nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
-        hosts:
-          - host: "{{ .Values.global.domain }}"
-            paths:
-              - path: /ui/v2/login
-                pathType: Prefix
-        tls:
-          - secretName: "{{ replace .Values.global.domain \".\" \"-\" }}-tls"
-            hosts:
-              - "{{ .Values.global.domain }}"
 
