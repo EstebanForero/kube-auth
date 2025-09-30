@@ -19,7 +19,10 @@ spec:
         args: ["start-from-init"]
         env:
         - name: ZITADEL_MASTERKEY
-          value: "insecure-dev-key"
+          valueFrom:
+            secretKeyRef:
+              name: zitadel-masterkey
+              key: masterkey
         - name: ZITADEL_DATABASE_POSTGRES_HOST
           value: "kube-auth-postgresql"
         - name: ZITADEL_DATABASE_POSTGRES_PORT
