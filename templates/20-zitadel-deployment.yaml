@@ -16,13 +16,10 @@ spec:
       containers:
       - name: zitadel
         image: ghcr.io/zitadel/zitadel:latest
-        args: ["start-from-init"]
+        args: ["start-from-init"]   # use "start" after the first boot
         env:
-        - name: ZITADEL_MASTERKEY
-          valueFrom:
-            secretKeyRef:
-              name: zitadel-masterkey
-              key: masterkey
+        - name: ZITADEL_MASTERKEY_FILE
+          value: "/secrets/masterkey"
         - name: ZITADEL_DATABASE_POSTGRES_HOST
           value: "kube-auth-postgresql"
         - name: ZITADEL_DATABASE_POSTGRES_PORT
@@ -42,4 +39,15 @@ spec:
         ports:
         - containerPort: 8080
         - containerPort: 8443
+        volumeMounts:
+        - name: zitadel-masterkey
+          mountPath: /secrets
+          readOnly: true
+      volumes:
+      - name: zitadel-masterkey
+        secret:
+          secretName: zitadel-masterkey
+          items:
+            - key: masterkey
+              path: masterkey
 
